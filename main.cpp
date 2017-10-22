@@ -3,21 +3,30 @@ AnalogOut speaker(p18);
 Ticker sampletick;
 DigitalOut myled(LED1);
 //Plays Audio Clip using Array in Flash
-//
+//8-bit audio samples used
 //setup const array in flash with audio values 
 //from free wav file conversion tool at
 //http://ccgi.cjseymour.plus.com/wavtocode/wavtocode.htm
 //see https://os.mbed.com/users/4180_1/notebook/using-flash-to-play-audio-clips/
-#include "cylonbyc.h"
+#include "cylon8bit.h"
 
 #define sample_freq 11025.0
 //get and set the frequency from wav conversion tool GUI
 int i=0;
 
+union short_or_char {
+    short s;
+    char  c[2];
+};
+
+union short_or_char sample;
+
+
 //interrupt routine to play next audio sample from array in flash
 void audio_sample ()
 {
-    speaker.write_u16(sound_data[i]);
+    sample.c[1] = sound_data[i];
+    speaker.write_u16(sample.s);
     i++;
     if (i>= NUM_ELEMENTS) {
         i = 0;
@@ -27,6 +36,7 @@ void audio_sample ()
 }
 int main()
 {
+    sample.c[0] = 0; //setup fast byte to short conversion using union
     while(1) {
         myled = 1;
 //use a ticker to play send next audio sample value to D/A
