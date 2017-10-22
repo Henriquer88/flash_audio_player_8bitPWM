@@ -1,9 +1,9 @@
 #include "mbed.h"
-AnalogOut speaker(p18);
+PwmOut speaker(p26);
 Ticker sampletick;
 DigitalOut myled(LED1);
 //Plays Audio Clip using Array in Flash
-//8-bit audio samples used
+//8-bit audio samples used on PWM pin
 //setup const array in flash with audio values 
 //from free wav file conversion tool at
 //http://ccgi.cjseymour.plus.com/wavtocode/wavtocode.htm
@@ -14,19 +14,11 @@ DigitalOut myled(LED1);
 //get and set the frequency from wav conversion tool GUI
 int i=0;
 
-union short_or_char {
-    short s;
-    char  c[2];
-};
-
-union short_or_char sample;
-
-
 //interrupt routine to play next audio sample from array in flash
 void audio_sample ()
 {
-    sample.c[1] = sound_data[i];
-    speaker.write_u16(sample.s);
+
+    speaker = sound_data[i]/255.0;//scale to 0.0 to 1.0 for PWM
     i++;
     if (i>= NUM_ELEMENTS) {
         i = 0;
@@ -36,7 +28,7 @@ void audio_sample ()
 }
 int main()
 {
-    sample.c[0] = 0; //setup fast byte to short conversion using union
+    speaker.period(1.0/250000.0); //PWM freq >10X audio sample rate
     while(1) {
         myled = 1;
 //use a ticker to play send next audio sample value to D/A
